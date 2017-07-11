@@ -1,16 +1,13 @@
+#ifndef MYCUDA_H
+#define MYCUDA_H
+
 namespace myCuda{
 
-	
-	int add(int a, int b);
+	int add(int a, int b);	
+	int subtract(int a, int b);
+	int multiply(int a, int b);
+	int divide(int a, int b);
 
-/*
-	
-	T subtract(T a, T b);
-
-	
-	T multiply(T a, T b);
-
-	
-	T divide(T a, T b);
-*/
 }
+
+#endif //MYCUDA_H

@@ -7,8 +7,29 @@ static PyObject* pipcudemo_core_add(PyObject *self, PyObject *args){
 		return Py_BuildValue("i", pipcudemo::add(a, b));
 	}
 
+static PyObject* pipcudemo_core_subtract(PyObject *self, PyObject *args){
+	int a,b;
+		if (!PyArg_ParseTuple(args, "ii", &a, &b))return NULL;
+		return Py_BuildValue("i", pipcudemo::subtract(a, b));
+	}
+
+static PyObject* pipcudemo_core_multiply(PyObject *self, PyObject *args){
+	int a,b;
+		if (!PyArg_ParseTuple(args, "ii", &a, &b))return NULL;
+		return Py_BuildValue("i", pipcudemo::multiply(a, b));
+	}
+
+static PyObject* pipcudemo_core_divide(PyObject *self, PyObject *args){
+	int a,b;
+		if (!PyArg_ParseTuple(args, "ii", &a, &b))return NULL;
+		return Py_BuildValue("i", pipcudemo::divide(a, b));
+	}
+
 static PyMethodDef pipcudemo_core_methods[] = {
-	{"add",(PyCFunction)pipcudemo_core_add, METH_VARARGS, "Execute Prismatic calculation"},
+	{"add",(PyCFunction)pipcudemo_core_add,			  METH_VARARGS, "Add two integers"},
+	{"subtract",(PyCFunction)pipcudemo_core_subtract, METH_VARARGS, "Subtract two integers"},
+	{"multiply",(PyCFunction)pipcudemo_core_multiply, METH_VARARGS, "Multiply two integers"},
+	{"divide",(PyCFunction)pipcudemo_core_divide,     METH_VARARGS, "Divide two integers"},
    	{NULL, NULL, 0, NULL}
 };
 

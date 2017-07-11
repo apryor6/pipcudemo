@@ -7,11 +7,11 @@ namespace pipcudemo{
 		return myCuda::add(a, b);
 	}
 
-	int subintract(int a, int b){
-		return myCuda::divide(a, b);
+	int subtract(int a, int b){
+		return myCuda::subtract(a, b);
 	}
 
-	int mulintiply(int a, int b){
+	int multiply(int a, int b){
 		return myCuda::multiply(a, b);
 	}
 
