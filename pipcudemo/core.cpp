@@ -1,5 +1,5 @@
 #include "Python.h"
-#include "myLib.h"
+#include "mylib.h"
 
 static PyObject* pipcudemo_core_add(PyObject *self, PyObject *args){
 	int a,b;

@@ -372,7 +372,7 @@ Although the above may sound like a lot of steps, it's actually quite simple usi
 // pipcudemo/core.cpp
 
 #include "Python.h"
-#include "myLib.h"
+#include "mylib.h"
 
 static PyObject* pipcudemo_core_add(PyObject *self, PyObject *args){
 	int a,b;
@@ -438,6 +438,7 @@ from setuptools import setup, Extension
 
 pipcudemo_core = Extension('pipcudemo.core',
 	sources=['pipcudemo/core.cpp'],
+	include_dirs = ['.'],
 	libraries=['mylib'])
 
 setup(name = 'pipcudemo',
@@ -463,3 +464,77 @@ include mylib.h
 include testDriver.cpp
 include pipcudemo/core.cpp
 ~~~
+
+## Registering the package to PyPi
+
+To upload the package so that it may be `pip` installed, you need to create an account on [PyPi](https://pypi.python.org/pypi). For ease of use, you can create a `~/.pypirc` file on your local machine to automatically authenticate your uploads (process described [here](https://docs.python.org/3/distutils/packageindex.html)). The upload command is then performed in one line:
+
+~~~
+python3 setup.py sdist upload -r pypi
+~~~
+
+## Installing the package
+
+We can then discover the package
+
+~~~
+pip search pipcudemo
+~~~
+
+>pipcudemo (1.0.3)  - An example project showing how to build a pip-installable
+>                     Python package that invokes custom CUDA/C++ code.
+
+And it can be installed with `pip install` provided that `mylib` has been built and can be found. The way I prefer to make the library locatable is to modify environmental variables. On Linux that is accomplished using `LD_LIBRARY_PATH` and `LIBRARY_PATH` as follows
+
+~~~
+export LD_LIBRARY_PATH=/path/to/mylib:$LD_LIBRARY_PATH
+export LIBRARY_PATH=/path/to/mylib:$LD_LIBRARY_PATH
+~~~ 
+
+`LIBRARY_PATH` is used for finding libraries during the linking phase at compilation, and `LD_LIBRARY_PATH` is used for finding shared libraries when a dynamically-linked executable is launched ("LD" for **l**ink **d**ynamically). On Mac it is almost the same
+
+~~~
+export DYLD_LIBRARY_PATH=/path/to/mylib:$LD_LIBRARY_PATH
+export LIBRARY_PATH=/path/to/mylib:$LD_LIBRARY_PATH
+~~~ 
+
+and on Windows you set `LIB` for linking and `PATH` for runtime. This is best done by graphically editing the environmental variables. 
+
+With the environmental variables set, you can install the package
+
+~~~ 
+pip install pipcudemo
+~~~
+
+and test it as follows
+
+~~~ python
+import pipcudemo as pcd
+pcd.add(1,2)
+pcd.subtract(2,4)
+pcd.multiply(4,5)
+pcd.divide(999,9)
+~~~
+
+> 3
+> -2
+> 20
+> 111
+
+### Troubleshooting
+
+If you receive any errors about being unable to find a library file, unresolved references, etc the problem is almost certainly an issue with how the paths are setup. If you don't want to setup evironmental variables, you can also use `--global-option`, `build_ext`, and the `-L` tag with `pip` to specify include and library paths as follows
+
+~~~
+pip install pipcudemo --global-option=build_ext --global-option="-L/path/to/mylib"
+~~~
+
+and you could also download the package and use the `setup.py` script manually
+
+~~~
+python3 setup.py build_ext --library-dirs="/path/to/mylib" install
+~~~
+
+## Conclusion
+
+Python and CUDA are an extremely powerful combination. Although the code in this example was kept simple, one can imagine the extension to much more complicated CUDA/C++ code. I hope you found this interesting or helpful, and as always I welcome feedback/comments/discussion.
