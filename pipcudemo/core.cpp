@@ -35,7 +35,11 @@ static PyMethodDef pipcudemo_core_methods[] = {
 
 
 static struct PyModuleDef module_def = {
-	PyModuleDef_HEAD_INIT,"pipcudemo.core","An example project showing how to build a pip-installable Python package that invokes custom CUDA/C++ code.",-1,pipcudemo_core_methods
+	PyModuleDef_HEAD_INIT,
+	"pipcudemo.core",
+	"An example project showing how to build a pip-installable Python package that invokes custom CUDA/C++ code.",
+	-1,
+	pipcudemo_core_methods
 };
 
 PyMODINIT_FUNC PyInit_core(){

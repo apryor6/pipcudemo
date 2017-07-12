@@ -340,15 +340,126 @@ Now that we have a working CUDA library, we can move on to creating a Python wra
 
 ## Creating the Python package
 
-There are a few necessary ingredients for making a Python package
-
-1. A `setup.py` script
-2. A folder of the same name as the package
-3. An `__init__.py` file within the package folder
-
-And a few ingredients necessary for a Python C++ extension
+There are a few necessary ingredients for making a Python C++ extension
 
 1. C/C++ function(s) that parse arguments passed from Python, invoke the desired C/C++ code, and construct Python return values.
 2. A PyInit_modulename method that initializes the module name "modulename"
 3. A method definition table that maps the desired name of the function in Python to the actual C/C++ methods and defines the calling signature
-4. A module definition structure that connects the method definition table to the module initialization function
+4. A module definition structure that connects the method definition table to the module initialization function 
+
+
+and a few ingredients for making a Python package
+
+1. A `setup.py` script
+2. A folder of the same name as the package
+3. An `__init__.py` file within the package folder
+4. A manifest file that indicates what files to ship with the package
+
+
+The way I like to organize such a project is to have the package, in this case called `pipcudemo`, contain a module called `core` which is the C++ extension module. Then the `__init__.py` file just contains a single line `from pipcudemo.core import *` which will allow us to ultimately call our calculator functions like so
+
+~~~ python
+import pipcudemo as pcd
+pcd.add(1,2)
+~~~
+
+
+### The C++ extension
+
+Although the above may sound like a lot of steps, it's actually quite simple using some Python API calls, defined in `Python.h`
+
+~~~ c+++
+// pipcudemo/core.cpp
+
+#include "Python.h"
+#include "myLib.h"
+
+static PyObject* pipcudemo_core_add(PyObject *self, PyObject *args){
+	int a,b;
+		if (!PyArg_ParseTuple(args, "ii", &a, &b))return NULL;
+		return Py_BuildValue("i", pipcudemo::add(a, b));
+	}
+
+static PyObject* pipcudemo_core_subtract(PyObject *self, PyObject *args){
+	int a,b;
+		if (!PyArg_ParseTuple(args, "ii", &a, &b))return NULL;
+		return Py_BuildValue("i", pipcudemo::subtract(a, b));
+	}
+
+static PyObject* pipcudemo_core_multiply(PyObject *self, PyObject *args){
+	int a,b;
+		if (!PyArg_ParseTuple(args, "ii", &a, &b))return NULL;
+		return Py_BuildValue("i", pipcudemo::multiply(a, b));
+	}
+
+static PyObject* pipcudemo_core_divide(PyObject *self, PyObject *args){
+	int a,b;
+		if (!PyArg_ParseTuple(args, "ii", &a, &b))return NULL;
+		return Py_BuildValue("i", pipcudemo::divide(a, b));
+	}
+
+static PyMethodDef pipcudemo_core_methods[] = {
+	{"add",(PyCFunction)pipcudemo_core_add,			  METH_VARARGS, "Add two integers"},
+	{"subtract",(PyCFunction)pipcudemo_core_subtract, METH_VARARGS, "Subtract two integers"},
+	{"multiply",(PyCFunction)pipcudemo_core_multiply, METH_VARARGS, "Multiply two integers"},
+	{"divide",(PyCFunction)pipcudemo_core_divide,     METH_VARARGS, "Divide two integers"},
+   	{NULL, NULL, 0, NULL}
+};
+
+
+static struct PyModuleDef module_def = {
+	PyModuleDef_HEAD_INIT,
+	"pipcudemo.core",
+	"An example project showing how to build a pip-installable Python package that invokes custom CUDA/C++ code.",
+	-1,
+	pipcudemo_core_methods
+};
+
+PyMODINIT_FUNC PyInit_core(){
+	return PyModule_Create(&module_def);
+}
+
+~~~
+
+All our functions that are called from Python need to have the signature: `static PyObject* function_name(PyObject *self, PyObject *args)`. This function signature is given it's own name in Python, `PyCFunction`. Each of these use the function `PyArg_ParseTuple` to copy the two integer arguments into the variables `a` and `b`. The helper function `Py_BuildValue` then returns an integer whose value is determined by invoking one of the arithmetic functions from our CUDA library. For organizational purposes, I prefixed the named of all of these functions with `pipcudemo_core_`, but you could name them anything. The `PyMethodDef` contains one entry per function plus a null entry for termination. Each entry contains a string to be used as the function name within Python, the function to call, a keyword representing the argument type within Python (see [METH_VARARGS](https://docs.python.org/3/c-api/structures.html#METH_VARARGS), and the doctstring which is visible when using Python's `help()`.   The [PyModuleDef](https://docs.python.org/3/c-api/module.html#c.PyModuleDef) object is then constructed. This always starts with `PyModuleDef_HEAD_INIT`, then the string name of the module, the docstring, -1 (don't worry about this argument), and lastly the method table.  
+
+Using this `PyModuleDef` object, the module initialization method is just one line and returns a value created with `PyModule_Create`. 
+
+And that's all the glue we need to connect Python with our CUDA/C++ code. Now to package up this for distribution
+
+### The `setup.py` script
+
+The special `setup.py` script is used by `setuptools` to distribute Python packages and their dependencies. Here's a simple one.
+
+~~~ python
+// setup.py
+
+from setuptools import setup, Extension
+
+pipcudemo_core = Extension('pipcudemo.core',
+	sources=['pipcudemo/core.cpp'],
+	libraries=['mylib'])
+
+setup(name = 'pipcudemo',
+	author = 'Alan (AJ) Pryor, Jr.', 
+	author_email='apryor6@gmail.com',
+	version = '1.0.0',
+	description="An example project showing how to build a pip-installable Python package that invokes custom CUDA/C++ code.",
+	ext_modules=[pipcudemo_core],
+	packages=['pipcudemo'])
+
+~~~
+
+We define our extension module by including the source file and, critically, indicating that it should be linked against `mylib`. Then the package is assembled with the `setup` method. There are many other arguments to these functions that can be explored with Python's `help()` or, better yet, through Google searches.
+
+### The MANIFEST.in
+
+`MANIFEST.in` indicates what extra files need to be included in the package that ships to PyPi. We might have files on our local version that we don't want to distribute. The `include` keyword is used in the manifest file like so
+
+~~~
+include myCuda.cu
+include myCuda.cuh
+include mylib.h
+include testDriver.cpp
+include pipcudemo/core.cpp
+~~~

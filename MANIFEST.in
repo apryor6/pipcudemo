@@ -1,0 +1,5 @@
+include myCuda.cu
+include myCuda.cuh
+include mylib.h
+include testDriver.cpp
+include pipcudemo/core.cpp
