@@ -12,7 +12,7 @@ inline void GPUAssert(cudaError_t code, const char *file, int line, bool abort=t
 	}
 }
 
-namespace myCuda{
+namespace pipcudemo{
 
 	
 	// implement the CUDA kernels
@@ -44,7 +44,7 @@ namespace myCuda{
 
 	
 	// implement the wrappers that copy memory and invoke the kernels
-	int add(int a, int b){
+	__host__ int add(int a, int b){
 		int *a_d, *b_d, *c_d, result;
 
 		// allocate memory on device
@@ -66,7 +66,7 @@ namespace myCuda{
 	}
 
 	
-	int subtract(int a, int b){
+	__host__ int subtract(int a, int b){
 		int *a_d, *b_d, *c_d, result;
 
 		// allocate memory on device
@@ -88,7 +88,7 @@ namespace myCuda{
 	}
 
 	
-	int multiply(int a, int b){
+	__host__ int multiply(int a, int b){
 		int *a_d, *b_d, *c_d, result;
 
 		// allocate memory on device
@@ -110,7 +110,7 @@ namespace myCuda{
 	}
 
 	
-	int divide(int a, int b){
+	__host__ int divide(int a, int b){
 		int *a_d, *b_d, *c_d, result;
 
 		// allocate memory on device

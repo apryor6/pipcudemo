@@ -1,6 +1,6 @@
 #include <cassert>
 #include <iostream>
-#include "myLib.h"
+#include "mylib.h"
 
 int main(){
 
